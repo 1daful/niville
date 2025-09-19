@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-image",
+      "description": "Abstract representation of digital transactions and connectivity.",
+      "imageUrl": "https://picsum.photos/seed/niville-hero/1200/800",
+      "imageHint": "technology abstract"
+    },
+    {
+      "id": "logo-techcorp",
+      "description": "Logo for TechCorp",
+      "imageUrl": "https://picsum.photos/seed/techcorp/40/40",
+      "imageHint": "logo abstract"
+    },
+    {
+      "id": "logo-innovateinc",
+      "description": "Logo for InnovateInc",
+      "imageUrl": "https://picsum.photos/seed/innovateinc/40/40",
+      "imageHint": "logo circle"
+    },
+    {
+      "id": "logo-bizsolutions",
+      "description": "Logo for BizSolutions",
+      "imageUrl": "https://picsum.photos/seed/bizsolutions/40/40",
+      "imageHint": "logo geometric"
+    }
+  ]
 }
