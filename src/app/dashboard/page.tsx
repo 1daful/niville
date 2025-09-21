@@ -123,7 +123,7 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent>
                     <div className="text-2xl font-bold">&nbsp;</div>
-                        <Button size="sm" className="w-full">View Profile</Button>
+                        <Button size="sm" className="w-full" onClick={() => router.push('/dashboard/profile')}>View Profile</Button>
                     </CardContent>
                 </Card>
             </div>
