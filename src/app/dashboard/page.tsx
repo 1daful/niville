@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { BarChart, DollarSign, Users, Activity } from 'lucide-react';
 
 import { Header } from '@/components/layout/header';
@@ -59,6 +59,15 @@ export default function DashboardPage() {
   } | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
+  const fetchData = useCallback(async () => {
+    if(user) {
+      setDataLoading(true);
+      const data: any = await getDashboardData();
+      setDashboardData(data);
+      setDataLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/sign-in');
@@ -66,16 +75,8 @@ export default function DashboardPage() {
   }, [user, authLoading, router]);
   
   useEffect(() => {
-    async function fetchData() {
-      if(user) {
-        setDataLoading(true);
-        const data: any = await getDashboardData();
-        setDashboardData(data);
-        setDataLoading(false);
-      }
-    }
     fetchData();
-  }, [user]);
+  }, [fetchData]);
 
   const chartConfig = {
     spending: {
@@ -207,8 +208,9 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
             <Card>
-              <CardHeader>
+              <CardHeader className='flex-row justify-between items-center'>
                 <CardTitle>Recent Transactions</CardTitle>
+                <Button variant="ghost" size="sm" onClick={fetchData}>Refresh</Button>
               </CardHeader>
               <CardContent>
                  {dataLoading ? (
@@ -227,18 +229,26 @@ export default function DashboardPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {dashboardData?.recentTransactions.map((tx, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <div className="font-medium">{tx.service}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {tx.provider}
-                          </div>
+                    {dashboardData?.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
+                      dashboardData.recentTransactions.map((tx, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            <div className="font-medium">{tx.service}</div>
+                            <div className="text-sm text-muted-foreground">
+                              {tx.provider}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">{formatCurrency(tx.amount)}</TableCell>
+                          <TableCell>{tx.date}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center h-24">
+                          No recent transactions found.
                         </TableCell>
-                        <TableCell className="text-right">{formatCurrency(tx.amount)}</TableCell>
-                        <TableCell>{tx.date}</TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
                 )}

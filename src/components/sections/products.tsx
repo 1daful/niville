@@ -6,12 +6,26 @@ import type { Product } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { PaymentModal } from '@/components/payment-modal';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/auth-context';
 
 export function ProductsSection() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const { user } = useAuth();
+  const router = useRouter();
 
   const handleBuyNow = (product: Product) => {
-    setSelectedProduct(product);
+    if (!user) {
+      router.push('/sign-in');
+    } else {
+      setSelectedProduct(product);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    // For now, we just close the modal.
+    // If the dashboard was on this page, we might want to refresh it.
+    console.log('Payment was successful, data should refresh if visible.');
   };
 
   return (
@@ -53,6 +67,7 @@ export function ProductsSection() {
         product={selectedProduct}
         isOpen={!!selectedProduct}
         onClose={() => setSelectedProduct(null)}
+        onPaymentSuccess={handlePaymentSuccess}
       />
     </>
   );

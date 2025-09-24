@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { useState, useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -24,7 +25,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import type { Product } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useAuth } from '@/contexts/auth-context';
+import { saveTransaction } from '@/lib/api';
+import { useRouter } from 'next/navigation';
 
 const paymentFormSchema = z.object({
   identifier: z.string().min(10, {
@@ -41,10 +44,14 @@ interface PaymentModalProps {
   product: Product | null;
   isOpen: boolean;
   onClose: () => void;
+  onPaymentSuccess: () => void; // Callback to refresh dashboard data
 }
 
-export function PaymentModal({ product, isOpen, onClose }: PaymentModalProps) {
+export function PaymentModal({ product, isOpen, onClose, onPaymentSuccess }: PaymentModalProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
+  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const form = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentFormSchema),
@@ -60,13 +67,40 @@ export function PaymentModal({ product, isOpen, onClose }: PaymentModalProps) {
     }
   }, [product, form]);
   
-  function onSubmit(data: PaymentFormValues) {
-    console.log('Payment submitted', data);
-    toast({
-      title: 'Payment Successful!',
-      description: `Your payment for ${product?.title} was processed.`,
-    });
-    onClose();
+  async function onSubmit(data: PaymentFormValues) {
+    if (!user) {
+        toast({
+            variant: 'destructive',
+            title: 'Not Logged In',
+            description: 'You need to be signed in to make a payment.',
+        });
+        return router.push('/sign-in');
+    }
+    if (!product) return;
+
+    setIsProcessing(true);
+    try {
+        await saveTransaction({
+            title: product.title,
+            identifier: data.identifier,
+            amount: data.amount,
+        });
+
+        toast({
+            title: 'Payment Successful!',
+            description: `Your payment for ${product.title} was recorded.`,
+        });
+        onPaymentSuccess(); // Trigger data refresh on the dashboard
+        onClose();
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Payment Failed',
+            description: error.message || 'There was an issue processing your payment.',
+        });
+    } finally {
+        setIsProcessing(false);
+    }
   }
 
   const getIdentifierLabel = () => {
@@ -82,7 +116,7 @@ export function PaymentModal({ product, isOpen, onClose }: PaymentModalProps) {
         <DialogHeader>
           <DialogTitle>Pay for {product?.title}</DialogTitle>
           <DialogDescription>
-            Complete the details below to make a payment. This is a simulation.
+            Complete the details below to make a payment.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -113,7 +147,9 @@ export function PaymentModal({ product, isOpen, onClose }: PaymentModalProps) {
                 </FormItem>
               )}
             />
-            <Button type="submit" className={cn('w-full')}>Pay ₦{form.watch('amount')}</Button>
+            <Button type="submit" className={cn('w-full')} disabled={isProcessing}>
+                {isProcessing ? 'Processing...' : `Pay ₦${form.watch('amount')}`}
+            </Button>
           </form>
         </Form>
       </DialogContent>
